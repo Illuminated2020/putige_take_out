@@ -7,6 +7,7 @@ import com.itheima.reggie.entity.ShoppingCart;
 import com.itheima.reggie.service.ShoppingCartService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
@@ -84,8 +85,9 @@ public class ShoppingCartController {
         Long dishId = shoppingCart.getDishId();
 
         LambdaQueryWrapper<ShoppingCart> queryWrapper = new LambdaQueryWrapper<>();
+        //这里必须要加两个条件，否则会出现用户互相修改对方与自己购物车中相同套餐或者是菜品的数量
         queryWrapper.eq(ShoppingCart::getUserId, currentId);
-
+        queryWrapper.eq(ShoppingCart::getUserId,BaseContext.getCurrentId());
         if (shoppingCart.getDishId() != null) {
             //添加到购物车的是菜品
             queryWrapper.eq(ShoppingCart::getDishId, shoppingCart.getDishId());
@@ -99,9 +101,9 @@ public class ShoppingCartController {
         ShoppingCart cartServiceOne = shoppingCartService.getOne(queryWrapper);
 
         Integer number = cartServiceOne.getNumber();
-        if (number > 1) {
-            //如果数量大于1就减1
-            cartServiceOne.setNumber(number - 1);
+        number=number-1;
+        cartServiceOne.setNumber(number);
+        if (number > 0) {
             shoppingCartService.updateById(cartServiceOne);
         } else {
             //等于一则删除这条购物车记录
@@ -109,7 +111,6 @@ public class ShoppingCartController {
         }
         return R.success(cartServiceOne);
     }
-
 
     /**
      * 查看购物车
