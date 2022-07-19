@@ -13,9 +13,11 @@ import com.itheima.reggie.service.SetmealService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 /**
@@ -35,6 +37,9 @@ public class SetmealController {
     @Autowired
     private CategoryService categoryService;
 
+    @Autowired
+    private RedisTemplate redisTemplate;
+
     /**
      * 新增套餐
      *
@@ -48,6 +53,13 @@ public class SetmealController {
         return R.success("新增套餐成功");
     }
 
+    /**
+     * 分页查询
+     * @param page
+     * @param pageSize
+     * @param name
+     * @return
+     */
     @GetMapping("/page")
     public R<Page> page(@RequestParam int page, @RequestParam int pageSize, String name) {
         Page<Setmeal> pageInfo = new Page<>(page, pageSize);
@@ -88,7 +100,6 @@ public class SetmealController {
 
     /**
      * 删除套餐
-     *
      * @param ids
      * @return
      */
