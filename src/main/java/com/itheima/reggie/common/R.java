@@ -10,6 +10,11 @@ import java.util.Map;
  * 通用返回结果类，服务端响应的数据最终都会封装成此对象
  * @param <T>
  */
+/*
+因为 @Cacheable 会将方法的返回值R缓存在Redis中，而在Redis中存储对象，该对象是需要被序
+列化的，而对象要想被成功的序列化，就必须得实现 Serializable 接口。而当前我们定义的R，并未实
+现 Serializable 接口。所以，要解决该异常，只需要让R实现  Serializable 接口即可
+*/
 @Data
 public class R<T> implements Serializable {
 
