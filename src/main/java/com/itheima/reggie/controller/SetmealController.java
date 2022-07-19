@@ -13,6 +13,8 @@ import com.itheima.reggie.service.SetmealService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.web.bind.annotation.*;
 
@@ -47,6 +49,7 @@ public class SetmealController {
      * @return
      */
     @PostMapping
+    @CacheEvict(value = "setmealCache",allEntries = true) //清除setmealCache名称下,所有的缓存数据
     public R<String> save(@RequestBody SetmealDto setmealDto) {//传输过来的是jason格式的数据，需要加@RequestBody注解
         log.info("套餐信息：{}", setmealDto);
         setmealService.saveWithDish(setmealDto);
@@ -55,6 +58,7 @@ public class SetmealController {
 
     /**
      * 分页查询
+     *
      * @param page
      * @param pageSize
      * @param name
@@ -100,36 +104,40 @@ public class SetmealController {
 
     /**
      * 删除套餐
+     *
      * @param ids
      * @return
      */
     @DeleteMapping
+    @CacheEvict(value = "setmealCache",allEntries = true) //清除setmealCache名称下,所有的缓存数据
     public R<String> deleteWhihDish(@RequestParam List<Long> ids) {
-        log.info("ids:{}",ids);
+        log.info("ids:{}", ids);
         setmealService.removeWithDish(ids);
         return R.success("套餐数据删除成功");
     }
 
     /**
      * 更新套餐状态
+     *
      * @param status
      * @param ids
      * @return
      */
     @PostMapping("/status/{status}")
-    public R<String> updateStatus(@PathVariable Integer status,@RequestParam List<Long> ids){
-        LambdaUpdateWrapper<Setmeal> updateWrapper=new LambdaUpdateWrapper<>();
-        updateWrapper.in(Setmeal::getId,ids);
-        updateWrapper.set(Setmeal::getStatus,status);
+    public R<String> updateStatus(@PathVariable Integer status, @RequestParam List<Long> ids) {
+        LambdaUpdateWrapper<Setmeal> updateWrapper = new LambdaUpdateWrapper<>();
+        updateWrapper.in(Setmeal::getId, ids);
+        updateWrapper.set(Setmeal::getStatus, status);
         setmealService.update(updateWrapper);
         return R.success("修改套餐状态成功");
     }
 
     @GetMapping("/list")
-    public R<List<Setmeal>> list(Setmeal setmeal){
-        LambdaQueryWrapper<Setmeal> queryWrapper=new LambdaQueryWrapper<>();
-        queryWrapper.eq(setmeal.getCategoryId()!=null,Setmeal::getCategoryId,setmeal.getCategoryId());
-        queryWrapper.eq(setmeal.getStatus()!=null,Setmeal::getStatus,setmeal.getStatus());
+    @Cacheable(value = "setmealCache", key = "#setmeal.categoryId + '_' + #setmeal.status")
+    public R<List<Setmeal>> list(Setmeal setmeal) {
+        LambdaQueryWrapper<Setmeal> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(setmeal.getCategoryId() != null, Setmeal::getCategoryId, setmeal.getCategoryId());
+        queryWrapper.eq(setmeal.getStatus() != null, Setmeal::getStatus, setmeal.getStatus());
         queryWrapper.orderByDesc(Setmeal::getUpdateTime);
         List<Setmeal> list = setmealService.list(queryWrapper);
         return R.success(list);
