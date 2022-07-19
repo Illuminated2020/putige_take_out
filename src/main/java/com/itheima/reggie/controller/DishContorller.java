@@ -155,6 +155,8 @@ public class DishContorller {
             if (status == 1) return R.error("该菜品目前正在售卖，请停售后删除");
             dishService.deleteWithFlavor(id);
         }
+        Set keys = redisTemplate.keys("dish_*");
+        redisTemplate.delete(keys);
         return R.success("删除成功");
     }
 
@@ -165,6 +167,8 @@ public class DishContorller {
             dish.setStatus(status);
             dishService.updateById(dish);
         }
+        Set keys = redisTemplate.keys("dish_*");
+        redisTemplate.delete(keys);
         return R.success("修改成功");
     }
 

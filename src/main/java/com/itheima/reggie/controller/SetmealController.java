@@ -19,6 +19,7 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -49,7 +50,7 @@ public class SetmealController {
      * @return
      */
     @PostMapping
-    @CacheEvict(value = "setmealCache",allEntries = true) //清除setmealCache名称下,所有的缓存数据
+    @CacheEvict(value = "setmealCache", allEntries = true) //清除setmealCache名称下,所有的缓存数据
     public R<String> save(@RequestBody SetmealDto setmealDto) {//传输过来的是jason格式的数据，需要加@RequestBody注解
         log.info("套餐信息：{}", setmealDto);
         setmealService.saveWithDish(setmealDto);
@@ -109,7 +110,7 @@ public class SetmealController {
      * @return
      */
     @DeleteMapping
-    @CacheEvict(value = "setmealCache",allEntries = true) //清除setmealCache名称下,所有的缓存数据
+    @CacheEvict(value = "setmealCache", allEntries = true) //清除setmealCache名称下,所有的缓存数据
     public R<String> deleteWhihDish(@RequestParam List<Long> ids) {
         log.info("ids:{}", ids);
         setmealService.removeWithDish(ids);
@@ -129,9 +130,17 @@ public class SetmealController {
         updateWrapper.in(Setmeal::getId, ids);
         updateWrapper.set(Setmeal::getStatus, status);
         setmealService.update(updateWrapper);
+        Set keys = redisTemplate.keys("setmealCache*");
+        redisTemplate.delete(keys);
         return R.success("修改套餐状态成功");
     }
 
+    /**
+     * 获取商品列表
+     *
+     * @param setmeal
+     * @return
+     */
     @GetMapping("/list")
     @Cacheable(value = "setmealCache", key = "#setmeal.categoryId + '_' + #setmeal.status")
     public R<List<Setmeal>> list(Setmeal setmeal) {
