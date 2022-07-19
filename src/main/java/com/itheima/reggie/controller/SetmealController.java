@@ -125,13 +125,14 @@ public class SetmealController {
      * @return
      */
     @PostMapping("/status/{status}")
+    @CacheEvict(value = "setmealCache", allEntries = true) //清除setmealCache名称下,所有的缓存数据
     public R<String> updateStatus(@PathVariable Integer status, @RequestParam List<Long> ids) {
         LambdaUpdateWrapper<Setmeal> updateWrapper = new LambdaUpdateWrapper<>();
         updateWrapper.in(Setmeal::getId, ids);
         updateWrapper.set(Setmeal::getStatus, status);
         setmealService.update(updateWrapper);
-        Set keys = redisTemplate.keys("setmealCache*");
-        redisTemplate.delete(keys);
+//        Set keys = redisTemplate.keys("setmealCache*");
+//        redisTemplate.delete(keys);
         return R.success("修改套餐状态成功");
     }
 
