@@ -59,9 +59,9 @@ public class OrderController {
 
 
     @PostMapping("/again")
-    public R<String> again(@RequestBody Map<String,String> map) {
+    public R<String> again(@RequestBody  Map map) {
         //获取订单id
-        String ids = map.get("id");
+        String ids = (String) map.get("id");
 
         Long id = Long.parseLong(ids);
 
