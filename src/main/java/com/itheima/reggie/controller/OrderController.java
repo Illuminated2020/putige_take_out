@@ -13,6 +13,7 @@ import com.itheima.reggie.service.OrderDetailService;
 import com.itheima.reggie.service.OrderService;
 import com.itheima.reggie.service.ShoppingCartService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -94,4 +95,41 @@ public class OrderController {
         return R.success("操作成功");
     }
 
+    /**
+     * 后台查询订单明细
+     * @param page
+     * @param pageSize
+     * @param number
+     * @param beginTime
+     * @param endTime
+     * @return
+     */
+    @GetMapping("/page")
+    public R<Page> page(int page, int pageSize, String number,String beginTime,String endTime){
+        //分页构造器对象
+        Page<Orders> pageInfo = new Page<>(page,pageSize);
+        //构造条件查询对象
+        LambdaQueryWrapper<Orders> queryWrapper = new LambdaQueryWrapper<>();
+
+        //添加查询条件  动态sql  字符串使用StringUtils.isNotEmpty这个方法来判断
+        //这里使用了范围查询的动态SQL，这里是重点！！！
+        queryWrapper.like(number!=null,Orders::getNumber,number)
+                .gt(StringUtils.isNotEmpty(beginTime),Orders::getOrderTime,beginTime)
+                .lt(StringUtils.isNotEmpty(endTime),Orders::getOrderTime,endTime);
+
+        orderService.page(pageInfo,queryWrapper);
+        return R.success(pageInfo);
+    }
+
+    @PutMapping
+    public R<String> changeStatus(@RequestBody Orders orders){
+        Long id = orders.getId();
+        Integer status = orders.getStatus();
+        LambdaQueryWrapper<Orders> queryWrapper=new LambdaQueryWrapper<>();
+        queryWrapper.eq(Orders::getId,id);
+        Orders order = orderService.getOne(queryWrapper);
+        order.setStatus(status);
+        orderService.updateById(order);
+        return R.success("修改订单状态成功");
+    }
 }
